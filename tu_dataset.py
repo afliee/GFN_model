@@ -27,8 +27,9 @@ class TUDatasetExt(TUDataset):
             (default: :obj:`False`)
     """
 
-    url = 'https://ls11-www.cs.tu-dortmund.de/people/morris/' \
-          'graphkerneldatasets'
+    # url = 'https://ls11-www.cs.tu-dortmund.de/people/morris/' \
+    #       'graphkerneldatasets'
+
 
     def __init__(self,
                  root,
@@ -39,8 +40,13 @@ class TUDatasetExt(TUDataset):
                  use_node_attr=False,
                  processed_filename='data.pt'):
         self.processed_filename = processed_filename
-        super(TUDatasetExt, self).__init__(root, name, transform, pre_transform,
-                                           pre_filter, use_node_attr)
+        super(TUDatasetExt, self).__init__(
+            root=root,
+            name=name,
+            transform=transform,
+            pre_transform=pre_transform,
+            pre_filter=pre_filter,
+            use_node_attr=use_node_attr)
 
     @property
     def processed_file_names(self):

@@ -3,6 +3,7 @@ data/
 build/
 dist/
 alpha/
+data/
 .cache/
 .eggs/
 *.egg-info/

@@ -78,9 +78,9 @@ def cross_validation_with_val_set(dataset,
                                   weight_decay,
                                   epoch_select,
                                   with_eval_mode=True,
-                                  logger=None):
+                                  logger=None,
+                                  visualize=None):
     assert epoch_select in ['val_max', 'test_max'], epoch_select
-
     val_losses, train_accs, test_accs, durations = [], [], [], []
     for fold, (train_idx, test_idx, val_idx) in enumerate(
             zip(*k_fold(dataset, folds, epoch_select))):
@@ -133,6 +133,8 @@ def cross_validation_with_val_set(dataset,
         t_end = time.perf_counter()
         durations.append(t_end - t_start)
 
+    if visualize is not None:
+        visualize(model, test_loader,dataset_name=dataset.name, device=device)
     duration = tensor(durations)
     train_acc, test_acc = tensor(train_accs), tensor(test_accs)
     val_loss = tensor(val_losses)

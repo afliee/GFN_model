@@ -4,11 +4,12 @@ from itertools import product
 import re
 import sys
 import argparse
-from utils import logger
+import torch
+from utils import logger, visualize
 from datasets import get_dataset
 from train_eval import cross_validation_with_val_set, single_train_test
 from res_gcn import ResGCN
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 DATA_SOCIAL = ['COLLAB', 'IMDB-BINARY', 'IMDB-MULTI']
 DATA_SOCIAL += ['REDDIT-MULTI-5K', 'REDDIT-MULTI-12K', 'REDDIT-BINARY']
@@ -186,15 +187,27 @@ def run_exp_lib(dataset_feat_net_triples,
                 weight_decay=0,
                 epoch_select=args.epoch_select,
                 with_eval_mode=args.with_eval_mode,
-                logger=logger)
-
+                logger=logger, 
+                visualize=visualize)
         summary1 = 'data={}, model={}, feat={}, eval={}'.format(
             dataset_name, net, feat_str, args.epoch_select)
         summary2 = 'train_acc={:.2f}, test_acc={:.2f} ± {:.2f}, sec={}'.format(
             train_acc*100, acc*100, std*100, round(duration, 2))
+        # save to csv file
+        with open('results.csv', 'a') as f:
+            f.write('{}, {}, {}, {}, {}, {}, {}\n'.format(
+                dataset_name, net, feat_str, args.epoch_select,
+                train_acc, acc, std))
+            # write line to split
+            
+
         results += ['{}: {}, {}'.format('fin-result', summary1, summary2)]
         print('{}: {}, {}'.format('mid-result', summary1, summary2))
         sys.stdout.flush()
+
+        with open('results.txt', 'a') as f:
+            # write line to split
+            f.write('-----,' * 6 + '-----\n')
     print('-----\n{}'.format('\n'.join(results)))
     sys.stdout.flush()
 
@@ -261,14 +274,26 @@ def run_exp_feat_study():
 def run_exp_benchmark():
     # Run GFN, GFN (light), GCN
     print('[INFO] running standard benchmarks..')
-    datasets = DATA_BIO + DATA_SOCIAL
+    # datasets = DATA_BIO + DATA_SOCIAL
+    datasets = ['PROTEINS', 'ENZYMES', 'MUTAG', 'NCI1']
     feat_strs = ['deg+odeg100']
     nets = ['ResGFN', 'ResGFN_conv0_fc2', 'ResGCN']
-    run_exp_lib(create_n_filter_triples(datasets, feat_strs, nets,
+    times = [1, 2, 3, 4, 5]
+    for t in times:
+        run_exp_lib(create_n_filter_triples(datasets, feat_strs, nets,
                                         gfn_add_ak3=True,
                                         reddit_odeg10=True,
                                         dd_odeg10_ak1=True))
 
+def run_exp_visualize():
+    # Run GFN, GCN
+    print('[INFO] running visualization..')
+    datasets = ['PROTEINS']
+    feat_strs = ['deg+odeg100']
+    nets = ['ResGFN', 'ResGCN']
+    run_exp_lib(create_n_filter_triples(datasets, feat_strs, nets,
+                                        reddit_odeg10=True,
+                                        dd_odeg10_ak1=True))
 
 def run_exp_noises():
     # Run GFN, GCN
@@ -307,6 +332,8 @@ if __name__ == '__main__':
         run_exp_single_test()
     elif args.exp == 'benchmark':
         run_exp_benchmark()
+    elif args.exp == 'visualize':
+        run_exp_visualize()
     elif args.exp == 'noises':
         run_exp_noises()
     elif args.exp == 'image_gcn':
